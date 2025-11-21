@@ -1,0 +1,134 @@
+/* Polished UI for Model Canvas
+   - Dark default
+   - Accessible contrast for light as well
+   - All buttons moved to right panel or nav
+*/
+
+/* ---------- Theme variables ---------- */
+:root{
+  --bg: #0b0f12;
+  --surface: #0f1417;
+  --muted: #98a0b3;
+  --text: #eaf2ff;
+  --accent: #3b82f6;
+  --accent-2: #60a5fa;
+  --card: #0d1114;
+  --border: rgba(255,255,255,0.06);
+  --glass: rgba(255,255,255,0.02);
+  --radius: 12px;
+  --shadow-lg: 0 14px 44px rgba(2,6,23,0.65);
+  --transition: 220ms cubic-bezier(.2,.9,.2,1);
+  --max-plot-height: calc(100vh - 64px - 80px);
+}
+
+/* Light theme - class on html element: .light */
+:root.light{
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --muted: #55617a;
+  --text: #0b1220;
+  --accent: #1d4ed8;
+  --accent-2: #2563eb;
+  --card: #ffffff;
+  --border: rgba(2,6,23,0.06);
+  --glass: rgba(2,6,23,0.02);
+  --shadow-lg: 0 10px 28px rgba(16,24,40,0.06);
+}
+
+/* ---------- Base reset ---------- */
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+a{color:inherit}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+
+/* ---------- NAVBAR ---------- */
+.nav{
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);
+  gap:12px;
+}
+.nav-left{display:flex;align-items:center;gap:18px}
+.logo{font-weight:700;font-size:1.05rem}
+.logo-accent{color:var(--accent);margin-left:6px}
+
+/* nav items */
+.nav-item{display:flex;flex-direction:column}
+.nav-item label{font-size:11px;color:var(--muted);margin-bottom:6px}
+.select, .input{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);min-width:140px}
+.hp-pills{display:flex;gap:10px;align-items:center}
+.hp-pill{display:flex;flex-direction:column;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:var(--glass);min-width:120px}
+
+/* nav right */
+.nav-right{display:flex;align-items:center;gap:10px}
+.icon-btn{padding:8px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+.ghost{border:1px solid var(--border);background:transparent;color:var(--text)}
+
+/* ---------- Container layout ---------- */
+.container{display:flex;gap:18px;align-items:stretch;flex:1;padding:20px}
+.main-area{flex:1;display:flex;align-items:stretch;justify-content:center;min-width:0}
+.plot-wrapper{flex:1;border-radius:12px;padding:14px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border:1px solid var(--border);box-shadow:var(--shadow-lg);display:flex;align-items:stretch;justify-content:stretch;position:relative}
+.plot-canvas{width:100%;height:var(--max-plot-height);border-radius:8px;background:transparent}
+
+/* overlay */
+.overlay{position:absolute;left:22px;top:22px;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,0.45);color:#fff;backdrop-filter: blur(4px)}
+:root.light .overlay{background:rgba(255,255,255,0.9);color:var(--text);border:1px solid var(--border)}
+
+/* ---------- Right Panel ---------- */
+.right-panel{
+  width:420px;
+  background:var(--surface);
+  border-radius:12px;
+  padding:16px;
+  border:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  transition:transform var(--transition),opacity var(--transition);
+  min-height: calc(100vh - 64px - 40px);
+}
+.right-panel.closed{transform:translateX(110%);opacity:0;pointer-events:none}
+
+/* top row of panel */
+.panel-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.panel-title{font-weight:600}
+.collapse{background:transparent;border:1px solid var(--border);padding:8px;border-radius:10px;cursor:pointer;color:var(--muted)}
+
+/* controls inside panel */
+.panel-section{display:flex;flex-direction:column;gap:10px}
+.field-row{display:flex;gap:10px}
+.input.num{width:110px;padding:8px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text)}
+.action-row{display:flex;gap:10px;align-items:center}
+.btn{padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer}
+.btn.primary{background:var(--accent);border:none;color:white}
+.btn.primary:hover{background:var(--accent-2)}
+.btn.ghost{border:1px solid var(--border)}
+
+/* metrics area */
+.metrics-section{display:flex;flex-direction:column;gap:12px;overflow:auto}
+.metrics-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.metric-big{font-size:20px;font-weight:700}
+.metric-plot-card{background:var(--card);padding:10px;border-radius:10px;border:1px solid var(--border)}
+.metric-title{font-size:12px;color:var(--muted);margin-bottom:6px}
+.metric-plot{height:160px}
+
+/* conf card hidden until final */
+.hidden{display:none}
+
+/* ---------- Footer ---------- */
+.footer{height:44px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;border-top:1px solid var(--border);background:transparent}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .container{flex-direction:column;padding:12px}
+  .right-panel{width:100%;min-height:auto;position:relative}
+  .plot-wrapper{height:420px}
+}
+
+/* animations & focus */
+.select:focus, .input:focus, .hp-pill input:focus {outline:none;box-shadow:0 4px 18px rgba(59,130,246,0.12);border-color:var(--accent)}
