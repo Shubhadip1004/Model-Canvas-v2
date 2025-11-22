@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Model Canvas — Polished UI</title>
+  <title>Model Canvas</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
@@ -78,8 +78,21 @@
         <div class="label muted">Controls</div>
         <div class="field-row">
           <label class="small">Epochs <input id="epochs" type="number" min="1" value="50" class="input num" /></label>
-          <label class="small">Interval (ms) <input id="interval" type="number" min="20" value="200" class="input num" /></label>
+          <label class="small">Interval (ms) <input id="interval" type="number" min="20" value="200"
+              class="input num" /></label>
         </div>
+        <div class="panel-section">
+          <div id="featureToggleContainer" class="field-row">
+            <label class="small">
+              View
+              <select id="featureViewSelect" class="select">
+                <option value="raw">Raw features</option>
+                <option value="pca">PCA (2D)</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
         <div class="action-row">
           <button id="trainBtn" class="btn primary">Train</button>
           <button id="stopBtn" class="btn ghost" disabled>Stop</button>
@@ -91,20 +104,30 @@
 
       <div class="panel-section metrics-section">
         <div class="metrics-top">
-          <div><div class="muted">Accuracy</div><div id="accuracyVal" class="metric-big">—</div></div>
-          <div><div class="muted">Loss</div><div id="lossVal" class="metric-big">—</div></div>
+          <div>
+            <div class="muted">Accuracy</div>
+            <div id="accuracyVal" class="metric-big">—</div>
+          </div>
+          <div>
+            <div class="muted">Loss</div>
+            <div id="lossVal" class="metric-big">—</div>
+          </div>
         </div>
 
-        <div class="metric-plot-card"><div class="metric-title">Accuracy</div><div id="accPlot" class="metric-plot"></div></div>
-        <div class="metric-plot-card"><div class="metric-title">Loss</div><div id="lossPlot" class="metric-plot"></div></div>
+        <div class="metric-plot-card">
+          <div class="metric-title">Accuracy</div>
+          <div id="accPlot" class="metric-plot"></div>
+        </div>
+        <div class="metric-plot-card">
+          <div class="metric-title">Loss</div>
+          <div id="lossPlot" class="metric-plot"></div>
+        </div>
 
         <div id="confCard" class="metric-plot-card hidden">
           <div class="metric-title">Confusion Matrix (final)</div>
           <div id="confMatrix" class="metric-plot"></div>
         </div>
       </div>
-
-      <div class="panel-footer muted small">Tip: collapse the panel to enlarge the plot area.</div>
     </aside>
 
   </div>
@@ -114,4 +137,5 @@
   <script src="plot.js"></script>
   <script src="app.js"></script>
 </body>
+
 </html>

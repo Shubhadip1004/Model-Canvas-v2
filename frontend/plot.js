@@ -1,41 +1,39 @@
-// plot.js - initialize canvas and small helpers
 function initAllPlots() {
   Plotly.newPlot(
     'boundaryPlot',
-    [{x: [], y: [], mode: 'markers'}],
+    [{ x: [], y: [], mode: 'markers' }],
     {
-      margin: {t: 30, b: 40, l: 40, r: 10},
+      margin: { t: 30, b: 40, l: 40, r: 10 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)'
     },
-    {responsive: true}
+    { responsive: true }
   );
 
   Plotly.newPlot(
     'accPlot',
-    [{x: [], y: [], mode: 'lines+markers', name: 'Accuracy'}],
+    [{ x: [], y: [], mode: 'lines+markers', name: 'Accuracy' }],
     {
-      margin: {t: 10},
+      margin: { t: 10 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: {range: [0, 1]}
+      yaxis: { range: [0, 1] }
     },
-    {responsive: true}
+    { responsive: true }
   );
 
   Plotly.newPlot(
     'lossPlot',
-    [{x: [], y: [], mode: 'lines+markers', name: 'Loss'}],
+    [{ x: [], y: [], mode: 'lines+markers', name: 'Loss' }],
     {
-      margin: {t: 10},
+      margin: { t: 10 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: {rangemode: 'tozero'}
+      yaxis: { rangemode: 'tozero' }
     },
-    {responsive: true}
+    { responsive: true }
   );
 
-  // initial confusion matrix placeholder; real plot is handled in app.js/showConfusion
   Plotly.newPlot(
     'confMatrix',
     [{
@@ -47,21 +45,23 @@ function initAllPlots() {
       showscale: true,
       text: [['0']],
       texttemplate: '%{text}',
-      textfont: {color: 'white'}
+      textfont: { color: 'white' }
     }],
     {
-      margin: {t: 40, l: 70, b: 40, r: 10},
-      xaxis: {title: 'Prediction'},
-      yaxis: {title: 'Actual', autorange: 'reversed'}
+      margin: { t: 40, l: 70, b: 40, r: 10 },
+      xaxis: { title: 'Prediction' },
+      yaxis: { title: 'Actual', autorange: 'reversed' }
     },
-    {responsive: true, autosize: true}
+    { responsive: true, autosize: true }
   );
 }
 
 initAllPlots();
 
-// convenience function exported to app.js
-window.renderBoundaryFrame = function (contour, traces, layout) {
-  // Reactively update the main plot: show contour + traces
-  Plotly.react('boundaryPlot', [contour, ...traces], layout, {responsive: true});
+window.renderBoundaryFrame = function (contour, traces, layout, featureView) {
+  if (contour && contour.x && contour.y && contour.z) {
+    Plotly.react('boundaryPlot', [contour, ...traces], layout, { responsive: true });
+  } else {
+    Plotly.react('boundaryPlot', [...traces], layout, { responsive: true });
+  }
 };

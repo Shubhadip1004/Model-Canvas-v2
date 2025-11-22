@@ -10,11 +10,10 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, accuracy_score, log_loss
+from sklearn.decomposition import PCA
 
-# Do NOT modify this file per user request
 from utils.data_loader import load_dataset
 
-# sklearn models
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
@@ -23,9 +22,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 
 
-# ------------------------------------------------------------
-# Flask setup
-# ------------------------------------------------------------
 app = Flask(__name__, static_folder=None)
 CORS(app, origins="*")
 
@@ -35,68 +31,52 @@ SESSIONS = {}
 SESSIONS_LOCK = threading.Lock()
 
 
-# ------------------------------------------------------------
-# Build classifier from name
-# ------------------------------------------------------------
 def build_classifier(algo: str, hyper: dict):
     algo = algo.lower()
     mode = hyper.get("mode", "educational")
 
     if algo == "knn":
-        return KNeighborsClassifier(n_neighbors=int(hyper.get("n_neighbors", 5)))
-
+        if mode == "educational":
+            k = 3
+        else:
+            k = 7
+        return KNeighborsClassifier(n_neighbors=int(hyper.get("n_neighbors", k)))
     elif algo == "svm":
-        return SVC(
-            kernel=hyper.get("kernel", "rbf"),
-            C=float(hyper.get("C", 1.0)),
-            probability=False
-        )
-
+        if mode == "educational":
+            c = 1
+        else:
+            c = 2
+        return SVC(kernel=hyper.get("kernel", "rbf"), C=float(hyper.get("C", c)), probability=False)
     elif algo in ("decision_tree", "dt"):
-        md = hyper.get("max_depth", None)
+        if mode == "educational":
+            m = 3
+        else:
+            m = 8
+        md = hyper.get("max_depth", m)
         md = None if md in (None, "None") else int(md)
         return DecisionTreeClassifier(max_depth=md)
-
     elif algo in ("random_forest", "rf"):
-        n = int(hyper.get("n_estimators", 100))
-        return RandomForestClassifier(n_estimators=n)
-
+        if mode == "educational":
+            n = 3
+            depth = 4
+        else:
+            n = 7
+            depth = 10
+        n = int(hyper.get("n_estimators", n))
+        return RandomForestClassifier(n_estimators=n,max_depth=depth)
     elif algo in ("neural_network", "neural_net", "mlp"):
         hidden = hyper.get("hidden_layer_sizes", "50")
-        # robust parsing: allow "50," etc.
         hidden = tuple(int(x.strip()) for x in hidden.split(",") if x.strip() != "")
         lr = float(hyper.get("learning_rate_init", 0.001))
         act_func = hyper.get("activation_function", 'relu')
         if mode == "educational":
-            # slow, step-by-step learning
-            return MLPClassifier(
-                activation=act_func,
-                hidden_layer_sizes=hidden,
-                learning_rate_init=lr,
-                warm_start=True,
-                max_iter=1  # runs 1 step each iteration
-            )
-        else:  # optimized mode
-            return MLPClassifier(
-                activation=act_func,
-                hidden_layer_sizes=hidden,
-                learning_rate_init=lr,
-                max_iter=50,  # trains much more each iteration
-                warm_start=True
-            )
-
-    else:
-        # Logistic regression family
-        if mode == 'optimized':
-            max_iter = 200
+            return MLPClassifier(activation=act_func, hidden_layer_sizes=hidden, learning_rate_init=lr, warm_start=True, max_iter=1)
         else:
-            max_iter = 20
-        return LogisticRegression(max_iter=max_iter)
+            return MLPClassifier(activation=act_func, hidden_layer_sizes=hidden, learning_rate_init=lr, max_iter=50, warm_start=True)
+    else:
+        return LogisticRegression(max_iter=200 if hyper.get("mode") == "optimized" else 20)
 
 
-# ------------------------------------------------------------
-# Utility: Convert dataset into scatter format
-# ------------------------------------------------------------
 def pack_points(X, y):
     if X.shape[1] >= 2:
         return {
@@ -112,9 +92,6 @@ def pack_points(X, y):
         }
 
 
-# ------------------------------------------------------------
-# Build 2D decision grid
-# ------------------------------------------------------------
 def build_grid(model, X, NX=120, NY=80):
     if X.shape[1] < 2:
         x0 = X[:, 0]
@@ -155,9 +132,6 @@ def build_grid(model, X, NX=120, NY=80):
     }
 
 
-# ------------------------------------------------------------
-# Dataset Preview Endpoint
-# ------------------------------------------------------------
 @app.route("/preview_dataset")
 def preview_dataset():
     ds = request.args.get("dataset", "iris")
@@ -177,12 +151,13 @@ def preview_dataset():
         Xtr, Xte = X[:c], X[c:]
         ytr, yte = y[:c], y[c:]
 
-    return jsonify({"train": pack_points(Xtr, ytr), "test": pack_points(Xte, yte)})
+    return jsonify({
+        "train": pack_points(Xtr, ytr),
+        "test": pack_points(Xte, yte),
+        "class_names": [str(c) for c in labels],
+    })
 
 
-# ------------------------------------------------------------
-# Worker thread for training
-# ------------------------------------------------------------
 def session_worker(sid):
 
     with SESSIONS_LOCK:
@@ -219,6 +194,14 @@ def session_worker(sid):
     classes = np.unique(ytr)
     N = len(Xtr)
 
+    pca = None
+    if X.shape[1] > 2:
+        try:
+            pca = PCA(n_components=2)
+            pca.fit(Xtr)
+        except Exception:
+            pca = None
+
     for it in range(1, epochs + 1):
 
         with SESSIONS_LOCK:
@@ -226,16 +209,11 @@ def session_worker(sid):
                 q.put(json.dumps({"status": "stopped"}))
                 return
 
-        # ---- incremental slice for educational mode ----
         n_cur = max(2, int(N * it / epochs))
         Xs, ys = Xtr[:n_cur], ytr[:n_cur]
-        # --------------------------------------------------
 
-        # ---- full dataset always shown in optimized mode ----
         X_plot, y_plot = (Xtr, ytr) if mode == "optimized" else (Xs, ys)
-        # ------------------------------------------------------
 
-        # Multi-class safety
         if len(np.unique(ys)) < 2:
             q.put(json.dumps({
                 "iteration": it,
@@ -248,7 +226,9 @@ def session_worker(sid):
                 "confusion": None,
                 "class_names": class_names,
                 "feature_names": ["Feature 1", "Feature 2"],
-                "note": "Skipped iteration — only one class present",
+                "train_pca": None,
+                "test_pca": None,
+                "grid_pca": None,
             }))
             time.sleep(interval)
             continue
@@ -267,17 +247,19 @@ def session_worker(sid):
                     "confusion": None,
                     "class_names": class_names,
                     "feature_names": ["Feature 1", "Feature 2"],
-                    "note": f"Skipped — KNN requires at least k={k} samples",
+                    "train_pca": None,
+                    "test_pca": None,
+                    "grid_pca": None,
                 }))
                 time.sleep(interval)
                 continue
 
         try:
             if mode == "optimized":
-                model.fit(Xtr, ytr)        # full training
+                model.fit(Xtr, ytr)
             else:
-                model.fit(Xs, ys)          # incremental training
-        except Exception as e:
+                model.fit(Xs, ys)
+        except Exception:
             q.put(json.dumps({
                 "iteration": it,
                 "mode": mode,
@@ -288,18 +270,17 @@ def session_worker(sid):
                 "grid": None,
                 "confusion": None,
                 "class_names": class_names,
-                "feature_names": ["Feature 1", "Feature 2"],
+                "train_pca": None,
+                "test_pca": None,
+                "grid_pca": None,
             }))
             time.sleep(interval)
             continue
 
         try:
             preds = model.predict(Xte)
-        except ValueError as e:
-            if "n_neighbors" in str(e):
-                preds = np.zeros_like(yte)
-            else:
-                raise
+        except ValueError:
+            preds = np.zeros_like(yte)
 
         acc = float(accuracy_score(yte, preds))
 
@@ -316,19 +297,63 @@ def session_worker(sid):
         except Exception:
             conf = None
 
-        grid = build_grid(model, X_plot)  # grid must match plotted data
+        grid = build_grid(model, X_plot)
+
+        train_pca = None
+        test_pca = None
+        grid_pca = None
+
+        if pca is not None:
+            try:
+                train_pca = pack_points(pca.transform(X_plot), y_plot)
+                test_pca = {**pack_points(pca.transform(Xte), yte), "preds": preds.tolist()}
+
+                Xp = pca.transform(X_plot)
+                x_min = Xp[:, 0].min()
+                x_max = Xp[:, 0].max()
+                y_min = Xp[:, 1].min()
+                y_max = Xp[:, 1].max()
+                dx = 0.2 * (x_max - x_min)
+                dy = 0.2 * (y_max - y_min)
+                x_min, x_max = x_min - dx, x_max + dx
+                y_min, y_max = y_min - dy, y_max + dy
+
+                NX = 160
+                NY = 120
+                xs = np.linspace(x_min, x_max, NX)
+                ys = np.linspace(y_min, y_max, NY)
+                xx, yy = np.meshgrid(xs, ys)
+                grid_pts = np.c_[xx.ravel(), yy.ravel()]
+
+                full_pts = pca.inverse_transform(grid_pts)
+                preds_pca = model.predict(full_pts).tolist()
+
+                grid_pca = {
+                    "nx": NX,
+                    "ny": NY,
+                    "x_min": float(x_min),
+                    "x_max": float(x_max),
+                    "y_min": float(y_min),
+                    "y_max": float(y_max),
+                    "preds": preds_pca
+                }
+
+            except Exception:
+                train_pca = None
+                test_pca = None
+                grid_pca = None
 
         frame = {
             "iteration": it,
             "mode": mode,
             "acc": acc,
             "loss": loss,
-            "train": pack_points(X_plot, y_plot),   # <-- FULL DATA SENT WHEN OPTIMIZED
-            "test": {
-                **pack_points(Xte, yte),
-                "preds": preds.tolist(),
-            },
+            "train": pack_points(X_plot, y_plot),
+            "test": {**pack_points(Xte, yte), "preds": preds.tolist()},
+            "train_pca": train_pca,
+            "test_pca": test_pca,
             "grid": grid,
+            "grid_pca": grid_pca,
             "confusion": conf,
             "class_names": class_names,
             "feature_names": ["Feature 1", "Feature 2"],
@@ -340,9 +365,6 @@ def session_worker(sid):
     q.put(json.dumps({"status": "done"}))
 
 
-# ------------------------------------------------------------
-# Start training
-# ------------------------------------------------------------
 @app.route("/start_training", methods=["POST"])
 def start_training():
     body = request.get_json(force=True)
@@ -365,9 +387,6 @@ def start_training():
     return jsonify({"session_id": sid})
 
 
-# ------------------------------------------------------------
-# SSE stream
-# ------------------------------------------------------------
 @app.route("/stream_updates")
 def stream_updates():
     sid = request.args.get("session_id")
@@ -393,9 +412,6 @@ def stream_updates():
     return Response(gen(), mimetype="text/event-stream")
 
 
-# ------------------------------------------------------------
-# Stop training
-# ------------------------------------------------------------
 @app.route("/stop_training")
 def stop_training():
     sid = request.args.get("session_id")
@@ -405,13 +421,10 @@ def stop_training():
     return "invalid session", 400
 
 
-# ------------------------------------------------------------
-# Metadata
-# ------------------------------------------------------------
 @app.route("/metadata")
 def metadata():
     return jsonify({
-        "datasets": ["iris", "moons", "circles", "wine"],
+        "datasets": ["iris", "moons", "circles", "wine", "breast_cancer", "diabetes", "blobs"],
         "algorithms": [
             "knn",
             "svm",
@@ -423,9 +436,6 @@ def metadata():
     })
 
 
-# ------------------------------------------------------------
-# Serve frontend for local development
-# ------------------------------------------------------------
 @app.route("/")
 def index():
     return send_from_directory(FRONTEND_DIR, "index.html")
@@ -436,8 +446,5 @@ def static_files(path):
     return send_from_directory(FRONTEND_DIR, path)
 
 
-# ------------------------------------------------------------
-# Run locally
-# ------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, threaded=True)
