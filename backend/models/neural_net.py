@@ -21,8 +21,10 @@ class NeuralNetModel:
         layers = parse_layers(hyperparams.get("hidden_layer_sizes", "50,"))
         lr = float(hyperparams.get("learning_rate_init", 0.001))
         alpha = float(hyperparams.get("alpha", 0.0001))
+        act_func = hyperparams.get("activation_function", 'relu')
 
         self.model = MLPClassifier(
+            activation=act_func,
             hidden_layer_sizes=layers,
             learning_rate_init=lr,
             alpha=alpha,

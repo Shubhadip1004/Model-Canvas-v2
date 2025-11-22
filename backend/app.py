@@ -40,41 +40,58 @@ SESSIONS_LOCK = threading.Lock()
 # ------------------------------------------------------------
 def build_classifier(algo: str, hyper: dict):
     algo = algo.lower()
+    mode = hyper.get("mode", "educational")
 
     if algo == "knn":
         return KNeighborsClassifier(n_neighbors=int(hyper.get("n_neighbors", 5)))
 
-    if algo == "svm":
+    elif algo == "svm":
         return SVC(
             kernel=hyper.get("kernel", "rbf"),
             C=float(hyper.get("C", 1.0)),
             probability=False
         )
 
-    if algo in ("logistic", "logistic_reg"):
-        return LogisticRegression(max_iter=2000)
-
-    if algo in ("decision_tree", "dt"):
+    elif algo in ("decision_tree", "dt"):
         md = hyper.get("max_depth", None)
         md = None if md in (None, "None") else int(md)
         return DecisionTreeClassifier(max_depth=md)
 
-    if algo in ("random_forest", "rf"):
+    elif algo in ("random_forest", "rf"):
         n = int(hyper.get("n_estimators", 100))
         return RandomForestClassifier(n_estimators=n)
 
-    if algo in ("neural_network", "neural_net", "mlp"):
+    elif algo in ("neural_network", "neural_net", "mlp"):
         hidden = hyper.get("hidden_layer_sizes", "50")
-        hidden = tuple(int(x) for x in hidden.split(","))
+        # robust parsing: allow "50," etc.
+        hidden = tuple(int(x.strip()) for x in hidden.split(",") if x.strip() != "")
         lr = float(hyper.get("learning_rate_init", 0.001))
-        return MLPClassifier(
-            hidden_layer_sizes=hidden,
-            learning_rate_init=lr,
-            max_iter=1,
-            warm_start=True
-        )
+        act_func = hyper.get("activation_function", 'relu')
+        if mode == "educational":
+            # slow, step-by-step learning
+            return MLPClassifier(
+                activation=act_func,
+                hidden_layer_sizes=hidden,
+                learning_rate_init=lr,
+                warm_start=True,
+                max_iter=1  # runs 1 step each iteration
+            )
+        else:  # optimized mode
+            return MLPClassifier(
+                activation=act_func,
+                hidden_layer_sizes=hidden,
+                learning_rate_init=lr,
+                max_iter=50,  # trains much more each iteration
+                warm_start=True
+            )
 
-    return LogisticRegression(max_iter=2000)
+    else:
+        # Logistic regression family
+        if mode == 'optimized':
+            max_iter = 200
+        else:
+            max_iter = 20
+        return LogisticRegression(max_iter=max_iter)
 
 
 # ------------------------------------------------------------
@@ -124,7 +141,7 @@ def build_grid(model, X, NX=120, NY=80):
 
     try:
         preds = model.predict(pts_full).tolist()
-    except:
+    except Exception:
         preds = [0] * (NX * NY)
 
     return {
@@ -154,7 +171,7 @@ def preview_dataset():
             random_state=42,
             stratify=y if len(np.unique(y)) > 1 else None,
         )
-    except:
+    except Exception:
         N = len(X)
         c = int(N * 0.67)
         Xtr, Xte = X[:c], X[c:]
@@ -172,6 +189,7 @@ def session_worker(sid):
         cfg = SESSIONS[sid]
 
     dataset = cfg["dataset"]
+    mode = cfg["mode"]
     algo = cfg["algo"]
     hyper = cfg["hyper"]
     epochs = cfg["epochs"]
@@ -189,7 +207,11 @@ def session_worker(sid):
         stratify=y if len(np.unique(y)) > 1 else None,
     )
 
-    # Shuffle training data
+    try:
+        class_names = [str(c) for c in labels]
+    except Exception:
+        class_names = [str(c) for c in np.unique(y)]
+
     p = np.random.permutation(len(Xtr))
     Xtr, ytr = Xtr[p], ytr[p]
 
@@ -204,63 +226,73 @@ def session_worker(sid):
                 q.put(json.dumps({"status": "stopped"}))
                 return
 
+        # ---- incremental slice for educational mode ----
         n_cur = max(2, int(N * it / epochs))
         Xs, ys = Xtr[:n_cur], ytr[:n_cur]
+        # --------------------------------------------------
+
+        # ---- full dataset always shown in optimized mode ----
+        X_plot, y_plot = (Xtr, ytr) if mode == "optimized" else (Xs, ys)
+        # ------------------------------------------------------
 
         # Multi-class safety
         if len(np.unique(ys)) < 2:
             q.put(json.dumps({
                 "iteration": it,
+                "mode": mode,
                 "acc": 0,
                 "loss": 0,
-                "train": pack_points(Xs, ys),
+                "train": pack_points(X_plot, y_plot),
                 "test": {"x": [], "y": [], "labels": [], "preds": []},
                 "grid": None,
                 "confusion": None,
+                "class_names": class_names,
+                "feature_names": ["Feature 1", "Feature 2"],
                 "note": "Skipped iteration — only one class present",
             }))
             time.sleep(interval)
             continue
 
-        # KNN safety: require >= k samples
         if algo == "knn":
             k = int(hyper.get("n_neighbors", 5))
-            if len(Xs) < k:
+            if len(ys) < k:
                 q.put(json.dumps({
                     "iteration": it,
+                    "mode": mode,
                     "acc": 0,
                     "loss": 0,
-                    "train": pack_points(Xs, ys),
+                    "train": pack_points(X_plot, y_plot),
                     "test": {"x": [], "y": [], "labels": [], "preds": []},
                     "grid": None,
                     "confusion": None,
+                    "class_names": class_names,
+                    "feature_names": ["Feature 1", "Feature 2"],
                     "note": f"Skipped — KNN requires at least k={k} samples",
                 }))
                 time.sleep(interval)
                 continue
 
-        # ---- SAFE TRAINING BLOCK ----
-        supports_pf = hasattr(model, "partial_fit")
-
         try:
-            if supports_pf:
-                # First iteration — partial_fit must receive classes
-                if it == 1:
-                    model.partial_fit(Xs, ys, classes=classes)  # type: ignore
-                else:
-                    model.partial_fit(Xs, ys)  # type: ignore
+            if mode == "optimized":
+                model.fit(Xtr, ytr)        # full training
             else:
-                model.fit(Xs, ys)
-
+                model.fit(Xs, ys)          # incremental training
         except Exception as e:
-            # Fallback to normal fit if partial_fit fails for some models
-            try:
-                model.fit(Xs, ys)
-            except:
-                print("Training failed:", e)
+            q.put(json.dumps({
+                "iteration": it,
+                "mode": mode,
+                "acc": 0,
+                "loss": 0,
+                "train": pack_points(X_plot, y_plot),
+                "test": {"x": [], "y": [], "labels": [], "preds": []},
+                "grid": None,
+                "confusion": None,
+                "class_names": class_names,
+                "feature_names": ["Feature 1", "Feature 2"],
+            }))
+            time.sleep(interval)
+            continue
 
-
-        # Prediction safety
         try:
             preds = model.predict(Xte)
         except ValueError as e:
@@ -271,32 +303,35 @@ def session_worker(sid):
 
         acc = float(accuracy_score(yte, preds))
 
-        loss = 0
+        loss = 0.0
         if hasattr(model, "predict_proba"):
             try:
                 prob = model.predict_proba(Xte)
                 loss = float(log_loss(yte, prob, labels=classes))
-            except:
+            except Exception:
                 pass
 
         try:
             conf = confusion_matrix(yte, preds).tolist()
-        except:
+        except Exception:
             conf = None
 
-        grid = build_grid(model, Xs)
+        grid = build_grid(model, X_plot)  # grid must match plotted data
 
         frame = {
             "iteration": it,
+            "mode": mode,
             "acc": acc,
             "loss": loss,
-            "train": pack_points(Xs, ys),
+            "train": pack_points(X_plot, y_plot),   # <-- FULL DATA SENT WHEN OPTIMIZED
             "test": {
                 **pack_points(Xte, yte),
                 "preds": preds.tolist(),
             },
             "grid": grid,
             "confusion": conf,
+            "class_names": class_names,
+            "feature_names": ["Feature 1", "Feature 2"],
         }
 
         q.put(json.dumps(frame))
@@ -317,6 +352,7 @@ def start_training():
 
     SESSIONS[sid] = {
         "dataset": body.get("dataset", "iris"),
+        "mode": body.get("mode", "educational"),
         "algo": body.get("algo", "knn"),
         "hyper": body.get("hyperparams", {}),
         "epochs": int(body.get("epochs", 50)),

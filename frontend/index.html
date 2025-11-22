@@ -1,24 +1,28 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Model Canvas — Polished UI</title>
 
-  <!-- NOTE: original uploaded project (for reference): /mnt/data/Model-Canvas.zip -->
-
-  <!-- Inter font (use locally or via Google in production) -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
-<body>
 
-  <!-- NAV BAR: logo | dataset | algo | compact HP pills | spacer | theme + help -->
+<body>
   <header class="nav">
     <div class="nav-left">
       <div class="logo">Model <span class="logo-accent">Canvas</span></div>
+
+      <div class="nav-item">
+        <label>Training Mode</label>
+        <select id="trainingMode">
+          <option value="educational">Educational</option>
+          <option value="optimized">Optimized</option>
+        </select>
+      </div>
 
       <div class="nav-item">
         <label>Dataset</label>
@@ -45,21 +49,18 @@
         </select>
       </div>
 
-      <div id="hpPills" class="hp-pills" aria-hidden="false">
-        <!-- hyperparameter pills render here -->
-      </div>
+      <div id="hpPills" class="hp-pills"></div>
     </div>
 
     <div class="nav-right">
-      <button id="themeBtn" class="icon-btn" title="Toggle theme">🌙</button>
+      <button id="themeBtn" class="icon-btn">🌙</button>
       <button id="helpBtn" class="ghost small">?</button>
     </div>
   </header>
 
-  <!-- MAIN + METRICS -->
-  <div class="container">
+  <!-- LAYOUT WRAPPER ENABLED -->
+  <div class="layout-container">
 
-    <!-- MAIN PLOT AREA -->
     <main id="mainArea" class="main-area">
       <div id="plotWrapper" class="plot-wrapper">
         <div id="boundaryPlot" class="plot-canvas"></div>
@@ -67,26 +68,18 @@
       </div>
     </main>
 
-    <!-- METRICS & CONTROLS (all controls moved here) -->
-    <aside id="rightPanel" class="right-panel open" aria-expanded="true">
-
+    <!-- RIGHT PANEL SLIDES OUT -->
+    <aside id="rightPanel" class="right-panel" aria-expanded="true">
       <div class="panel-top">
         <div class="panel-title">Training & Metrics</div>
-        <button id="toggleRight" class="collapse" title="Collapse metrics">⟵</button>
       </div>
 
       <div class="panel-section">
         <div class="label muted">Controls</div>
         <div class="field-row">
-          <label class="small">Epochs
-            <input id="epochs" type="number" min="1" value="50" class="input num" />
-          </label>
-
-          <label class="small">Interval (ms)
-            <input id="interval" type="number" min="20" value="200" class="input num" />
-          </label>
+          <label class="small">Epochs <input id="epochs" type="number" min="1" value="50" class="input num" /></label>
+          <label class="small">Interval (ms) <input id="interval" type="number" min="20" value="200" class="input num" /></label>
         </div>
-
         <div class="action-row">
           <button id="trainBtn" class="btn primary">Train</button>
           <button id="stopBtn" class="btn ghost" disabled>Stop</button>
@@ -94,29 +87,16 @@
         </div>
       </div>
 
-      <hr/>
+      <hr />
 
       <div class="panel-section metrics-section">
         <div class="metrics-top">
-          <div>
-            <div class="muted">Accuracy</div>
-            <div id="accuracyVal" class="metric-big">—</div>
-          </div>
-          <div>
-            <div class="muted">Loss</div>
-            <div id="lossVal" class="metric-big">—</div>
-          </div>
+          <div><div class="muted">Accuracy</div><div id="accuracyVal" class="metric-big">—</div></div>
+          <div><div class="muted">Loss</div><div id="lossVal" class="metric-big">—</div></div>
         </div>
 
-        <div class="metric-plot-card">
-          <div class="metric-title">Accuracy</div>
-          <div id="accPlot" class="metric-plot"></div>
-        </div>
-
-        <div class="metric-plot-card">
-          <div class="metric-title">Loss</div>
-          <div id="lossPlot" class="metric-plot"></div>
-        </div>
+        <div class="metric-plot-card"><div class="metric-title">Accuracy</div><div id="accPlot" class="metric-plot"></div></div>
+        <div class="metric-plot-card"><div class="metric-title">Loss</div><div id="lossPlot" class="metric-plot"></div></div>
 
         <div id="confCard" class="metric-plot-card hidden">
           <div class="metric-title">Confusion Matrix (final)</div>
@@ -124,15 +104,13 @@
         </div>
       </div>
 
-      <div class="panel-footer muted small">Tip: collapse the panel to enlarge the plot area. Hyperparams shown in nav.</div>
+      <div class="panel-footer muted small">Tip: collapse the panel to enlarge the plot area.</div>
     </aside>
 
   </div>
 
-  <!-- FOOTER / small credit area -->
-  <footer class="footer muted">Model Canvas — interactive classification playground (polished UI)</footer>
+  <footer class="footer muted">Model Canvas — interactive classification playground</footer>
 
-  <!-- scripts -->
   <script src="plot.js"></script>
   <script src="app.js"></script>
 </body>
