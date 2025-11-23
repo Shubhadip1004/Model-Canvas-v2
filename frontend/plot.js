@@ -10,21 +10,37 @@ function initAllPlots() {
     { responsive: true }
   );
 
+  // Accuracy plot with fixed green color
   Plotly.newPlot(
     'accPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Accuracy' }],
+    [{ 
+      x: [], 
+      y: [], 
+      mode: 'lines+markers', 
+      name: 'Accuracy',
+      line: { color: '#10b981', width: 2 },
+      marker: { color: '#10b981', size: 3 }
+    }],
     {
       margin: { t: 10 },
       paper_bgcolor: 'rgba(0,0,0,0)',
       plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: { range: [0, 1] }
+      yaxis: { range: [-0.05, 1.05] }
     },
     { responsive: true }
   );
 
+  // Loss plot with fixed red color
   Plotly.newPlot(
     'lossPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Loss' }],
+    [{ 
+      x: [], 
+      y: [], 
+      mode: 'lines+markers', 
+      name: 'Loss',
+      line: { color: '#ef4444', width: 2 },
+      marker: { color: '#ef4444', size: 3 }
+    }],
     {
       margin: { t: 10 },
       paper_bgcolor: 'rgba(0,0,0,0)',
@@ -64,4 +80,41 @@ window.renderBoundaryFrame = function (contour, traces, layout, featureView) {
   } else {
     Plotly.react('boundaryPlot', [...traces], layout, { responsive: true });
   }
+};
+
+// Function to reset metrics plots with fixed colors
+window.resetMetricsPlots = function() {
+  Plotly.react('accPlot',
+    [{ 
+      x: [], 
+      y: [], 
+      mode: 'lines+markers', 
+      name: 'Accuracy',
+      line: { color: '#10b981', width: 2 },
+      marker: { color: '#10b981', size: 3 }
+    }],
+    {
+      margin: { t: 10 },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      yaxis: { range: [-0.05, 1.05] }
+    }
+  );
+  
+  Plotly.react('lossPlot',
+    [{ 
+      x: [], 
+      y: [], 
+      mode: 'lines+markers', 
+      name: 'Loss',
+      line: { color: '#ef4444', width: 2 },
+      marker: { color: '#ef4444', size: 3 }
+    }],
+    {
+      margin: { t: 10 },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      yaxis: { rangemode: 'tozero' }
+    }
+  );
 };
