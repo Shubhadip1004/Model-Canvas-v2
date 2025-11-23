@@ -1,10 +1,3 @@
-// app.js - polished UI controller
-// Backend endpoints:
-// GET  /preview_dataset?dataset=NAME
-// POST /start_training  {dataset, algo, hyperparams, epochs, interval_ms, mode} -> {session_id}
-// GET  /stream_updates?session_id=ID  (SSE streaming per-iteration frames)
-// GET  /stop_training?session_id=ID  (optional)
-
 const API = "https://model-canvas-v2-backend.onrender.com";
 
 
