@@ -20,7 +20,6 @@ const confCard = document.getElementById('confCard');
 const epochsInput = document.getElementById('epochs');
 const intervalInput = document.getElementById('interval');
 
-const featureToggleContainer = document.getElementById('featureToggleContainer');
 const featureSelect = document.getElementById('featureViewSelect');
 
 let featureView = 'raw';
@@ -45,12 +44,47 @@ themeBtn.addEventListener('click', () => {
   }
 });
 
+
+const helpBtn = document.getElementById('helpBtn');
+const helpModal = document.getElementById('helpModal');
+const closeHelp = document.getElementById('closeHelp');
+const githubBtn = document.getElementById('githubBtn');
+
+const GITHUB_REPO_URL = 'https://github.com/Shubhadip1004/Model-Canvas-v2';
+
+helpBtn.addEventListener('click', function() {
+    helpModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+});
+
+closeHelp.addEventListener('click', function() {
+    helpModal.classList.add('hidden');
+    document.body.style.overflow = ''; 
+});
+
+githubBtn.addEventListener('click', function() {
+    window.open(GITHUB_REPO_URL, '_blank');
+});
+
+helpModal.addEventListener('click', function(e) {
+    if (e.target === helpModal) {
+        helpModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) {
+        helpModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+});
+
 if (featureSelect) {
   featureSelect.addEventListener('change', () => {
     featureView = featureSelect.value;
     if (lastFrame) {
       renderBoundaryFromFrame(lastFrame);
-      // Show confusion matrix when switching views if training is complete
       if (trainingComplete && lastConfusion && Array.isArray(lastConfusion)) {
         showConfusion(lastConfusion, lastClassNames);
       }
@@ -187,24 +221,10 @@ stopBtn.addEventListener('click', stopTraining);
 resetBtn.addEventListener('click', () => {
   loadPreview();
 
-  Plotly.react('accPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Accuracy' }],
-    {
-      margin: { t: 10 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: { range: [0, 1] }
-    }
-  );
-  Plotly.react('lossPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Loss' }],
-    {
-      margin: { t: 10 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: { rangemode: 'tozero' }
-    }
-  );
+  // Reset metrics plots using the function from plot.js
+  if (window.resetMetricsPlots) {
+    window.resetMetricsPlots();
+  }
 
   accuracyVal.innerText = '—';
   lossVal.innerText = '—';
@@ -231,27 +251,12 @@ async function startTraining() {
   accuracyVal.innerText = '—';
   lossVal.innerText = '—';
 
-  // Hide confusion matrix at start of training
   confCard.classList.add('hidden');
 
-  Plotly.react('accPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Accuracy' }],
-    {
-      margin: { t: 10 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: { range: [0, 1] }
-    }
-  );
-  Plotly.react('lossPlot',
-    [{ x: [], y: [], mode: 'lines+markers', name: 'Loss' }],
-    {
-      margin: { t: 10 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      yaxis: { rangemode: 'tozero' }
-    }
-  );
+  // Reset metrics plots using the function from plot.js
+  if (window.resetMetricsPlots) {
+    window.resetMetricsPlots();
+  }
 
   Plotly.react(
     'boundaryPlot',
@@ -298,7 +303,6 @@ async function startTraining() {
         trainBtn.disabled = false;
         stopBtn.disabled = true;
         
-        // FORCE SHOW CONFUSION MATRIX AFTER TRAINING
         setTimeout(() => {
           forceShowConfusionMatrix();
         }, 100);
@@ -334,21 +338,17 @@ function stopTraining() {
   stopBtn.disabled = true;
 }
 
-// NEW FUNCTION: Force show confusion matrix after training
 function forceShowConfusionMatrix() {
   console.log('Force showing confusion matrix. Training complete:', trainingComplete);
   
   if (trainingComplete) {
-    // Try multiple fallback methods to ensure confusion matrix is shown
     
-    // Method 1: Use stored confusion matrix
     if (lastConfusion && Array.isArray(lastConfusion)) {
       console.log('Showing stored confusion matrix');
       showConfusion(lastConfusion, lastClassNames);
       return;
     }
     
-    // Method 2: Use last frame's confusion matrix
     if (lastFrame && lastFrame.confusion && Array.isArray(lastFrame.confusion)) {
       console.log('Showing last frame confusion matrix');
       lastConfusion = lastFrame.confusion;
@@ -357,7 +357,6 @@ function forceShowConfusionMatrix() {
       return;
     }
     
-    // Method 3: Generate dummy confusion matrix for testing
     console.log('No confusion matrix data found. Showing dummy data for testing.');
     const dummyConfusion = [[15, 3], [2, 20]];
     const dummyClassNames = lastClassNames || ['Class 0', 'Class 1'];
@@ -389,7 +388,6 @@ function handleFrame(frame) {
 
   renderBoundaryFromFrame(frame);
 
-  // Store confusion matrix data during training
   if (frame.confusion && Array.isArray(frame.confusion)) {
     lastConfusion = frame.confusion;
     lastClassNames = frame.class_names || null;
@@ -466,7 +464,6 @@ function renderBoundaryFromFrame(frame) {
   };
   window.renderBoundaryFrame(contour || {}, traces, layout, featureView);
 
-  // Show confusion matrix after rendering boundary only if training is complete
   if (trainingComplete && lastConfusion && Array.isArray(lastConfusion)) {
     showConfusion(lastConfusion, lastClassNames);
   }
@@ -475,10 +472,8 @@ function renderBoundaryFromFrame(frame) {
 
 function showConfusion(matrix, classNames) {
   
-  // Force remove hidden class
   confCard.classList.remove("hidden");
   
-  // Ensure proper sizing
   confCard.style.maxHeight = 'none';
   confCard.style.overflow = 'visible';
   confCard.style.minHeight = '200px';
@@ -513,7 +508,6 @@ function showConfusion(matrix, classNames) {
     })
   );
 
-  // Set proper container height based on matrix size
   const containerHeight = Math.max(300, rows * 40 + 80);
   
   Plotly.react(
@@ -542,7 +536,6 @@ function showConfusion(matrix, classNames) {
     { responsive: true }
   );
   
-  // Force resize after rendering
   setTimeout(() => {
     Plotly.Plots.resize('confMatrix');
   }, 100);
