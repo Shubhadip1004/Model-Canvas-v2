@@ -4,9 +4,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Model Canvas</title>
+  <title>Model Canvas - Machine Learning Visualization Platform</title>
+  <meta name="description" content="Interactive platform for visualizing and understanding machine learning algorithms with real-time training metrics">
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
@@ -14,125 +15,194 @@
 <body>
   <header class="nav">
     <div class="nav-left">
-      <div class="logo">Model <span class="logo-accent">Canvas</span></div>
-
-      <div class="nav-item">
-        <label>Training Mode</label>
-        <select id="trainingMode">
-          <option value="educational">Educational</option>
-          <option value="optimized">Optimized</option>
-        </select>
+      <div class="logo-container">
+        <div class="logo">Model <span class="logo-accent">Canvas</span></div>
+        <div class="logo-subtitle">ML Visualization Platform</div>
       </div>
 
-      <div class="nav-item">
-        <label>Dataset</label>
-        <select id="datasetSelect" class="select">
-          <option value="iris">Iris</option>
-          <option value="wine">Wine</option>
-          <option value="breast_cancer">Breast Cancer</option>
-          <option value="diabetes">Diabetes</option>
-          <option value="moons">Make Moons</option>
-          <option value="circles">Make Circles</option>
-          <option value="blobs">Make Blobs</option>
-        </select>
-      </div>
+      <div class="nav-divider"></div>
 
-      <div class="nav-item">
-        <label>Algorithm</label>
-        <select id="algoSelect" class="select">
-          <option value="logistic">Logistic Regression</option>
-          <option value="knn">KNN</option>
-          <option value="svm">SVM</option>
-          <option value="decision_tree">Decision Tree</option>
-          <option value="random_forest">Random Forest</option>
-          <option value="neural_network">Neural Network</option>
-        </select>
+      <div class="nav-controls">
+        <div class="nav-item">
+          <label class="nav-label">Training Mode</label>
+          <select id="trainingMode" class="select">
+            <option value="educational">Educational</option>
+            <option value="optimized">Optimized</option>
+          </select>
+        </div>
+
+        <div class="nav-item">
+          <label class="nav-label">Dataset</label>
+          <select id="datasetSelect" class="select">
+            <option value="iris">Iris</option>
+            <option value="wine">Wine</option>
+            <option value="breast_cancer">Breast Cancer</option>
+            <option value="diabetes">Diabetes</option>
+            <option value="moons">Make Moons</option>
+            <option value="circles">Make Circles</option>
+            <option value="blobs">Make Blobs</option>
+          </select>
+        </div>
+
+        <div class="nav-item">
+          <label class="nav-label">Algorithm</label>
+          <select id="algoSelect" class="select">
+            <option value="logistic">Logistic Regression</option>
+            <option value="knn">KNN</option>
+            <option value="svm">SVM</option>
+            <option value="decision_tree">Decision Tree</option>
+            <option value="random_forest">Random Forest</option>
+            <option value="neural_network">Neural Network</option>
+          </select>
+        </div>
       </div>
 
       <div id="hpPills" class="hp-pills"></div>
     </div>
 
     <div class="nav-right">
-      <button id="themeBtn" class="icon-btn">🌙</button>
-      <button id="helpBtn" class="ghost small">?</button>
+      <button id="themeBtn" class="icon-btn" title="Toggle theme">🌙</button>
+      <button id="helpBtn" class="btn ghost small" title="View Source Code & Documentation">?</button>
     </div>
   </header>
 
-  <!-- LAYOUT WRAPPER ENABLED -->
   <div class="layout-container">
-
     <main id="mainArea" class="main-area">
+      <div class="visualization-header">
+        <h2 class="viz-title">Decision Boundary Visualization</h2>
+        <p class="viz-description">Real-time visualization of model predictions and decision boundaries</p>
+      </div>
+      
       <div id="plotWrapper" class="plot-wrapper">
         <div id="boundaryPlot" class="plot-canvas"></div>
-        <div id="plotOverlay" class="overlay">Loading preview…</div>
+        <div id="plotOverlay" class="overlay">
+          <div class="loading-spinner"></div>
+          <span>Loading visualization...</span>
+        </div>
       </div>
     </main>
 
-    <!-- RIGHT PANEL SLIDES OUT -->
     <aside id="rightPanel" class="right-panel" aria-expanded="true">
-      <div class="panel-top">
-        <div class="panel-title">Training & Metrics</div>
+      <div class="panel-header">
+        <div class="panel-title-section">
+          <h3 class="panel-title">Training & Metrics</h3>
+          <p class="panel-subtitle">Monitor model performance in real-time</p>
+        </div>
+        <button id="togglePanel" class="collapse-btn" title="Toggle panel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
       </div>
 
-      <div class="panel-section">
-        <div class="label muted">Controls</div>
-        <div class="field-row">
-          <label class="small">Epochs <input id="epochs" type="number" min="1" value="50" class="input num" /></label>
-          <label class="small">Interval (ms) <input id="interval" type="number" min="20" value="200"
-              class="input num" /></label>
-        </div>
+      <div class="panel-content">
         <div class="panel-section">
-          <div id="featureToggleContainer" class="field-row">
-            <label class="small">
-              View
-              <select id="featureViewSelect" class="select">
-                <option value="raw">Raw features</option>
-                <option value="pca">PCA (2D)</option>
-              </select>
-            </label>
+          <div class="section-header">
+            <span class="section-label">Training Controls</span>
+          </div>
+          
+          <div class="control-grid">
+            <div class="control-group">
+              <label class="control-label">Epochs</label>
+              <input id="epochs" type="number" min="1" value="50" class="input num" />
+            </div>
+            <div class="control-group">
+              <label class="control-label">Interval (ms)</label>
+              <input id="interval" type="number" min="20" value="200" class="input num" />
+            </div>
+          </div>
+
+          <div class="control-group full-width">
+            <label class="control-label">Feature View</label>
+            <select id="featureViewSelect" class="select">
+              <option value="raw">Raw Features</option>
+              <option value="pca">PCA Features</option>
+            </select>
+          </div>
+
+          <div class="action-row">
+            <button id="trainBtn" class="btn primary train-btn">
+              <span class="btn-icon">▶</span>
+              Train Model
+            </button>
+            <button id="stopBtn" class="btn secondary" disabled>
+              <span class="btn-icon">⏹</span>
+              Stop
+            </button>
+            <button id="resetBtn" class="btn ghost">Reset</button>
           </div>
         </div>
 
-        <div class="action-row">
-          <button id="trainBtn" class="btn primary">Train</button>
-          <button id="stopBtn" class="btn ghost" disabled>Stop</button>
-          <button id="resetBtn" class="btn">Reset</button>
-        </div>
-      </div>
+        <div class="panel-divider"></div>
 
-      <hr />
-
-      <div class="panel-section metrics-section">
-        <div class="metrics-top">
-          <div>
-            <div class="muted">Accuracy</div>
-            <div id="accuracyVal" class="metric-big">—</div>
+        <div class="panel-section metrics-section">
+          <div class="section-header">
+            <span class="section-label">Performance Metrics</span>
           </div>
-          <div>
-            <div class="muted">Loss</div>
-            <div id="lossVal" class="metric-big">—</div>
+
+          <div class="metrics-overview">
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Accuracy</span>
+                <div class="metric-trend up"></div>
+              </div>
+              <div id="accuracyVal" class="metric-value">—</div>
+              <div class="metric-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-header">
+                <span class="metric-label">Loss</span>
+                <div class="metric-trend down"></div>
+              </div>
+              <div id="lossVal" class="metric-value">—</div>
+              <div class="metric-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill loss" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div class="metric-plot-card">
-          <div class="metric-title">Accuracy</div>
-          <div id="accPlot" class="metric-plot"></div>
-        </div>
-        <div class="metric-plot-card">
-          <div class="metric-title">Loss</div>
-          <div id="lossPlot" class="metric-plot"></div>
-        </div>
+          <div class="metric-plot-card">
+            <div class="metric-plot-header">
+              <span class="metric-title">Accuracy Over Time</span>
+              <span class="metric-live">Live</span>
+            </div>
+            <div id="accPlot" class="metric-plot"></div>
+          </div>
+          
+          <div class="metric-plot-card">
+            <div class="metric-plot-header">
+              <span class="metric-title">Loss Over Time</span>
+              <span class="metric-live">Live</span>
+            </div>
+            <div id="lossPlot" class="metric-plot"></div>
+          </div>
 
-        <div id="confCard" class="metric-plot-card hidden">
-          <div class="metric-title">Confusion Matrix (final)</div>
-          <div id="confMatrix" class="metric-plot"></div>
+          <div id="confCard" class="metric-plot-card hidden">
+            <div class="metric-plot-header">
+              <span class="metric-title">Confusion Matrix</span>
+              <span class="metric-final">Final</span>
+            </div>
+            <div id="confMatrix" class="metric-plot conf-matrix"></div>
+          </div>
         </div>
       </div>
     </aside>
-
   </div>
 
-  <footer class="footer muted">Model Canvas — interactive classification playground</footer>
+  <footer class="footer">
+    <div class="footer-content">
+      <span class="footer-text">Model Canvas — Interactive Machine Learning Playground</span>
+      <div class="footer-links">
+        <span>Built for Educational Purposes</span>
+      </div>
+    </div>
+  </footer>
 
   <script src="plot.js"></script>
   <script src="app.js"></script>
