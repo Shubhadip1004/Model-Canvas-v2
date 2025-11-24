@@ -79,7 +79,7 @@ def load_dataset(name: str):
         labels = ["Class 0", "Class 1"]
 
     elif name == "blobs":
-        blob_data = make_blobs(n_samples=500, cluster_std=0.1, centers=6, random_state=42)
+        blob_data = make_blobs(n_samples=1200, centers=6, random_state=42)
         X = blob_data[0]  # Pylance-safe
         y = blob_data[1]
         labels = ["Class 0", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5"]
