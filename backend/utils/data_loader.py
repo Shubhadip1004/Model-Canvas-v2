@@ -71,18 +71,18 @@ def load_dataset(name: str):
     # ---------------------------------------------------------
 
     elif name == "moons":
-        X, y = make_moons(noise=0.15, random_state=42)
+        X, y = make_moons(n_samples=500, noise=0.15, random_state=42)
         labels = ["Class 0", "Class 1"]
 
     elif name == "circles":
-        X, y = make_circles(noise=0.1, factor=0.5, random_state=42)
+        X, y = make_circles(n_samples=500, noise=0.1, factor=0.5, random_state=42)
         labels = ["Class 0", "Class 1"]
 
     elif name == "blobs":
-        blob_data = make_blobs(n_samples=600, centers=3, random_state=42)
+        blob_data = make_blobs(n_samples=500, cluster_std=0.1, centers=6, random_state=42)
         X = blob_data[0]  # Pylance-safe
         y = blob_data[1]
-        labels = ["Class 0", "Class 1", "Class 2"]
+        labels = ["Class 0", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5"]
 
     else:
         raise ValueError(f"Unknown dataset: {name}")
