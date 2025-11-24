@@ -78,7 +78,7 @@ Model Canvas v2 is an educational platform designed to help students, researcher
 | **Diabetes** | 442 | 10 | 2 | Disease progression |
 | **Make Moons** | 500 | 2 | 2 | Synthetic non-linear data |
 | **Make Circles** | 500 | 2 | 2 | Concentric circle data |
-| **Make Blobs** | 500 | 2 | 6 | Gaussian clusters |
+| **Make Blobs** | 600 | 2 | 3 | Gaussian clusters |
 
 ## 🎨 UI/UX Features
 
