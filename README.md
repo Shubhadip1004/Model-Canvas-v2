@@ -76,9 +76,9 @@ Model Canvas v2 is an educational platform designed to help students, researcher
 | **Wine** | 178 | 13 | 3 | Wine chemical analysis |
 | **Breast Cancer** | 569 | 30 | 2 | Medical diagnosis data |
 | **Diabetes** | 442 | 10 | 2 | Disease progression |
-| **Make Moons** | 100+ | 2 | 2 | Synthetic non-linear data |
-| **Make Circles** | 100+ | 2 | 2 | Concentric circle data |
-| **Make Blobs** | 100+ | 2 | 3 | Gaussian clusters |
+| **Make Moons** | 500 | 2 | 2 | Synthetic non-linear data |
+| **Make Circles** | 500 | 2 | 2 | Concentric circle data |
+| **Make Blobs** | 500 | 2 | 6 | Gaussian clusters |
 
 ## 🎨 UI/UX Features
 
