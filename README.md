@@ -103,8 +103,6 @@ Model Canvas v2 is an educational platform designed to help students, researcher
 ## 🏗️ Project Structure
 
     model-canvas-v2/
-    ├── images/                 # Relevant Images incl. website logo
-    |   └── Model_Canvas.ico
     ├── Scrennshots/            # Live Website Screenshots
     │   ├── Screenshot 1.png          
     │   ├── Screenshot 2.png            
@@ -112,6 +110,7 @@ Model Canvas v2 is an educational platform designed to help students, researcher
     │   ├── Screenshot 4.png               
     │   └── Screenshot 5.png             
     ├── frontend/
+    │   ├── favicon.ico         # Logo
     │   ├── index.html          # Main application structure
     │   ├── style.css           # Comprehensive styling
     │   ├── app.js              # Application logic
@@ -167,7 +166,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Shubhadip Mahata**  
 - GitHub: [@Shubhadip1004](https://github.com/Shubhadip1004)
-- Email: shubhadip.w@gmail.com
+- Email: [shubhadip.w@gmail.com](mailto:shubhadip.w@gmail.com)
 - Project Link: [https://github.com/Shubhadip1004/Model-Canvas-v2](https://github.com/Shubhadip1004/Model-Canvas-v2)
 
 ## 🚀 Future Enhancements
