@@ -103,6 +103,14 @@ Model Canvas v2 is an educational platform designed to help students, researcher
 ## 🏗️ Project Structure
 
     model-canvas-v2/
+    ├── images/                 # Relevant Images incl. website logo
+    |   └── Model_Canvas.ico
+    ├── Scrennshots/            # Live Website Screenshots
+    │   ├── Screenshot 1.png          
+    │   ├── Screenshot 2.png            
+    │   ├── Screenshot 3.png            
+    │   ├── Screenshot 4.png               
+    │   └── Screenshot 5.png             
     ├── frontend/
     │   ├── index.html          # Main application structure
     │   ├── style.css           # Comprehensive styling
